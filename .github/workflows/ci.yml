@@ -1,44 +1,45 @@
-name: CI/CD Pipeline
+name: Deploy no GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]   # roda sempre que fizer push na main
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main  # roda sempre que tiver push na branch main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Pega o código
       - name: Checkout código
         uses: actions/checkout@v3
 
-      # 2. Configura Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # 3. Instala dependências
       - name: Instalar dependências
         run: npm install
 
-      # 4. Roda os testes
-      - name: Rodar testes
-        run: npm test
+      - name: Build do projeto
+        run: npm run build
 
-      # 5. Prepara arquivos para deploy (copiando tudo, menos a pasta dist)
-      - name: Preparar arquivos para deploy
-        run: |
-          mkdir dist
-          shopt -s extglob
-          cp -r !(dist) dist/
-
-      # 6. Faz o deploy no GitHub Pages
-      - name: Deploy no GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          path: ./dist  # troque se sua pasta de build não for "dist"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy para GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
