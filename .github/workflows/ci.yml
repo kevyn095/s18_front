@@ -2,32 +2,43 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]   # roda sempre que fizer push na main
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Pega o código
       - name: Checkout código
         uses: actions/checkout@v3
 
+      # 2. Configura Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '18'
 
+      # 3. Instala dependências
       - name: Instalar dependências
         run: npm install
 
+      # 4. Roda os testes
       - name: Rodar testes
-        run: npm test -- --watchAll=false
+        run: npm test
 
-        - name: Preparar arquivos para deploy
-        run: mkdir dist && cp -r * dist/      
+      # 5. Prepara arquivos para deploy (copiando tudo, menos a pasta dist)
+      - name: Preparar arquivos para deploy
+        run: |
+          mkdir dist
+          shopt -s extglob
+          cp -r !(dist) dist/
 
+      # 6. Faz o deploy no GitHub Pages
       - name: Deploy no GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./dist
