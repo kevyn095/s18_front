@@ -1,45 +1,21 @@
-name: Deploy no GitHub Pages
+name: CI/CD Pipeline
 
-on:
-  push:
-    branches:
-      - main  # roda sempre que tiver push na branch main
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout código
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Instalar dependências
+      - name: Install dependencies
         run: npm install
 
-      - name: Build do projeto
-        run: npm run build
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: ./dist  # troque se sua pasta de build não for "dist"
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy para GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Run tests
+        run: npm test
